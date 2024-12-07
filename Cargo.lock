@@ -5,6 +5,9 @@ version = 3
 [[package]]
 name = "demos"
 version = "0.1.0"
+dependencies = [
+ "micrograd",
+]
 
 [[package]]
 name = "micrograd"
