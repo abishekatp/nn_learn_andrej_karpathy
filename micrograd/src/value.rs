@@ -47,9 +47,9 @@ enum Operator {
     Minus,
     Mul,
     Div,
+    Tanh,
 }
 
-#[derive(Debug)]
 pub struct Value {
     data: f64,
     grad: f64, // grad(global gradient) field will have gradient of final output with respect to the Value(Self).
@@ -74,35 +74,34 @@ impl Value {
         })))
     }
 
+    // calling compute gradient on a output value will comput the gradient value
+    // w.r.t each one of its operands and store those gradients in the corresponding operands objects.
     fn comput_gradient(&mut self) {
+        // println!("{:?}: {:?}", self.operator, self);
+
         let out = self;
         match out.operator {
             Operator::Plus => {
                 if out.operands.len() == 2 {
                     let mut lhs = out.operands[0].0.borrow_mut();
-                    lhs.grad = out.grad * 1.0;
-
-                    // rhs value
                     let mut rhs = out.operands[1].0.borrow_mut();
+
+                    lhs.grad = out.grad * 1.0;
                     rhs.grad = out.grad * 1.0;
                 }
             }
             Operator::Minus => {
                 if out.operands.len() == 2 {
-                    // lhs value
                     let mut lhs = out.operands[0].0.borrow_mut();
-                    lhs.grad = out.grad * 1.0;
-
-                    // rhs value
                     let mut rhs = out.operands[1].0.borrow_mut();
+
+                    lhs.grad = out.grad * 1.0;
                     rhs.grad = out.grad * -1.0;
                 }
             }
             Operator::Mul => {
                 if out.operands.len() == 2 {
-                    // lhs value
                     let mut lhs = out.operands[0].0.borrow_mut();
-                    // rhs value
                     let mut rhs = out.operands[1].0.borrow_mut();
 
                     lhs.grad = out.grad * rhs.data;
@@ -111,9 +110,7 @@ impl Value {
             }
             Operator::Div => {
                 if out.operands.len() == 2 {
-                    // lhs value
                     let mut numerator = out.operands[0].0.borrow_mut();
-                    // rhs value
                     let mut denominator = out.operands[1].0.borrow_mut();
 
                     // y=x/z then dy/dx = 1/z and dy/dz = -x/y^2.
@@ -122,15 +119,39 @@ impl Value {
                         out.grad * -1.0 * numerator.data / (denominator.data * denominator.data);
                 }
             }
+            Operator::Tanh => {
+                if out.operands.len() == 1 {
+                    let mut input = out.operands[0].0.borrow_mut();
+
+                    // y = tahh(x) then dy/dx = 1 - (tanh(x))^2
+                    input.grad = 1.0 - (out.data * out.data);
+                }
+            }
             Operator::None => {}
         }
     }
+}
 
-    pub fn backward(out: &mut MutableValue) {
-        let mut val = out.0.borrow_mut();
-        // gradient of variable with respect to itself will be 1. y = z then dy/dz = 1.
+impl MutableValue {
+    pub fn backward(&mut self) {
+        let mut val = self.0.borrow_mut();
+        // set the gradient of output node as 1.(because making a small change in the output value will directly change the output value itself)
         val.grad = 1.0;
+        // compute its children gradients
         val.comput_gradient();
+
+        val.operands.iter_mut().for_each(|op| {
+            op.backward_internal();
+        });
+    }
+
+    fn backward_internal(&mut self) {
+        let mut val = self.0.borrow_mut();
+        val.comput_gradient();
+
+        val.operands.iter_mut().for_each(|op| {
+            op.backward_internal();
+        });
     }
 }
 
@@ -142,7 +163,7 @@ impl MutableValue {
             data: val.data.tanh(),
             grad: 0.0,
             operands: vec![self.clone()],
-            operator: Operator::None,
+            operator: Operator::Tanh,
         })))
     }
 }
@@ -217,5 +238,17 @@ impl Debug for MutableValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let val = self.0.borrow();
         write!(f, "Value(data:{}, grad:{})", val.data, val.grad)
+    }
+}
+
+impl Display for Value {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Value({})", self.data)
+    }
+}
+
+impl Debug for Value {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Value(data:{}, grad:{})", self.data, self.grad)
     }
 }
