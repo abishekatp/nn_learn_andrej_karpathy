@@ -60,6 +60,8 @@ pub struct Value {
 // we need Rc, because we need to allow reuse of instance of MutableValue.
 // we need RcCell, because we need to mutate the grad field in the Value for each MutableValue
 /// Cloning of MutableValue is a cheap operation since it is acutally wrapper around Rc and RefCell
+/// because of the same if you try to use the same Value in two places, then
+/// it's gradient will be the accumulated sum of gradients of all the places it has been used.
 #[derive(Clone)]
 pub struct MutableValue(Rc<RefCell<Value>>);
 
@@ -79,44 +81,68 @@ impl Value {
     fn comput_gradient(&mut self) {
         // println!("{:?}: {:?}", self.operator, self);
 
+        /*
+             If you use the same Value in two places, then it's gradient will be
+             the accumulated sum of gradients of all the places it has been used.
+        */
         let out = self;
         match out.operator {
             Operator::Plus => {
                 if out.operands.len() == 2 {
                     let mut lhs = out.operands[0].0.borrow_mut();
-                    let mut rhs = out.operands[1].0.borrow_mut();
+                    /*
+                        if you use borrow_mut just next to each other, then it will panic
+                        when we use let c = a.clone() + a; because we trying to get the
+                        mutable reference of same variable two times
+                    */
+                    if let Ok(mut rhs) = out.operands[1].0.try_borrow_mut() {
+                        lhs.grad += out.grad * 1.0;
+                        rhs.grad += out.grad * 1.0;
+                    } else {
+                        /*
+                            since this is single threaded only other place we got the
+                            mutable reference is just in the above line.
 
-                    lhs.grad = out.grad * 1.0;
-                    rhs.grad = out.grad * 1.0;
+                            if y = x + x = 2x then dy/dx = 2;
+                        */
+                        lhs.grad += 2.0;
+                    }
                 }
             }
             Operator::Minus => {
                 if out.operands.len() == 2 {
                     let mut lhs = out.operands[0].0.borrow_mut();
-                    let mut rhs = out.operands[1].0.borrow_mut();
-
-                    lhs.grad = out.grad * 1.0;
-                    rhs.grad = out.grad * -1.0;
+                    // handle: let c = a.clone() - a;
+                    if let Ok(mut rhs) = out.operands[1].0.try_borrow_mut() {
+                        lhs.grad += out.grad * 1.0;
+                        rhs.grad += out.grad * -1.0;
+                    }
+                    // else case: if y = x - x, then dy/dx = 0
                 }
             }
             Operator::Mul => {
                 if out.operands.len() == 2 {
                     let mut lhs = out.operands[0].0.borrow_mut();
-                    let mut rhs = out.operands[1].0.borrow_mut();
-
-                    lhs.grad = out.grad * rhs.data;
-                    rhs.grad = out.grad * lhs.data;
+                    if let Ok(mut rhs) = out.operands[1].0.try_borrow_mut() {
+                        lhs.grad += out.grad * rhs.data;
+                        rhs.grad += out.grad * lhs.data;
+                    } else {
+                        // if y = x * x = x^2, then dy/dx = 2x
+                        lhs.grad += out.grad * (2.0 * lhs.data);
+                    }
                 }
             }
             Operator::Div => {
                 if out.operands.len() == 2 {
                     let mut numerator = out.operands[0].0.borrow_mut();
-                    let mut denominator = out.operands[1].0.borrow_mut();
 
                     // y=x/z then dy/dx = 1/z and dy/dz = -x/y^2.
-                    numerator.grad = out.grad * 1.0 / denominator.data;
-                    denominator.grad =
-                        out.grad * -1.0 * numerator.data / (denominator.data * denominator.data);
+                    if let Ok(mut denominator) = out.operands[1].0.try_borrow_mut() {
+                        numerator.grad += out.grad * 1.0 / denominator.data;
+                        denominator.grad += out.grad * -1.0 * numerator.data
+                            / (denominator.data * denominator.data);
+                    }
+                    // else case: if y = x/x, then dy/dx = 0
                 }
             }
             Operator::Tanh => {
@@ -124,7 +150,7 @@ impl Value {
                     let mut input = out.operands[0].0.borrow_mut();
 
                     // y = tahh(x) then dy/dx = 1 - (tanh(x))^2
-                    input.grad = 1.0 - (out.data * out.data);
+                    input.grad += 1.0 - (out.data * out.data);
                 }
             }
             Operator::None => {}
