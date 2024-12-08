@@ -1,9 +1,14 @@
-use std::{
-    cell::RefCell,
-    fmt::{Debug, Display},
-    ops::{Add, Div, Mul, Sub},
-    rc::Rc,
-};
+use std::{cell::RefCell, fmt::Debug, rc::Rc};
+
+use data_type::{DataType, IntoValue};
+
+pub mod add;
+pub mod data_type;
+pub mod display;
+pub mod div;
+pub mod mul;
+pub mod sub;
+pub mod tanh;
 
 /*
 Note:
@@ -51,8 +56,8 @@ enum Operator {
 }
 
 pub struct Value {
-    data: f64,
-    grad: f64, // grad(global gradient) field will have gradient of final output with respect to the Value(Self).
+    data: DataType,
+    grad: DataType, // grad(global gradient) field will have gradient of final output with respect to the Value(Self).
     operands: Vec<MutableValue>,
     operator: Operator,
 }
@@ -67,9 +72,9 @@ pub struct MutableValue(Rc<RefCell<Value>>);
 
 impl Value {
     /// Cloning of returned value(MutableValue) is a cheap operation since it is acutally wrapper around Rc and RefCell
-    pub fn new(data: f64) -> MutableValue {
+    pub fn new<T: IntoValue>(data: T) -> MutableValue {
         MutableValue(Rc::new(RefCell::new(Value {
-            data,
+            data: data.into_value(),
             grad: 0.0,
             operands: vec![],
             operator: Operator::None,
@@ -178,103 +183,5 @@ impl MutableValue {
         val.operands.iter_mut().for_each(|op| {
             op.backward_internal();
         });
-    }
-}
-
-impl MutableValue {
-    // here lifetime of Value would be same as the lifetime of the self.
-    pub fn tanh(self) -> MutableValue {
-        let val = self.0.borrow();
-        MutableValue(Rc::new(RefCell::new(Value {
-            data: val.data.tanh(),
-            grad: 0.0,
-            operands: vec![self.clone()],
-            operator: Operator::Tanh,
-        })))
-    }
-}
-
-impl Add for MutableValue {
-    type Output = MutableValue;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        let lhsv = self.0.borrow();
-        let rhsv = rhs.0.borrow();
-        MutableValue(Rc::new(RefCell::new(Value {
-            data: lhsv.data + rhsv.data,
-            grad: 0.0,
-            operands: vec![self.clone(), rhs.clone()],
-            operator: Operator::Plus,
-        })))
-    }
-}
-
-impl Sub for MutableValue {
-    type Output = MutableValue;
-
-    fn sub(self, rhs: Self) -> Self::Output {
-        let lhsv = self.0.borrow();
-        let rhsv = rhs.0.borrow();
-        MutableValue(Rc::new(RefCell::new(Value {
-            data: lhsv.data - rhsv.data,
-            grad: 0.0,
-            operands: vec![self.clone(), rhs.clone()],
-            operator: Operator::Minus,
-        })))
-    }
-}
-
-impl Mul for MutableValue {
-    type Output = MutableValue;
-
-    fn mul(self, rhs: Self) -> Self::Output {
-        let lhsv = self.0.borrow();
-        let rhsv = rhs.0.borrow();
-        MutableValue(Rc::new(RefCell::new(Value {
-            data: lhsv.data * rhsv.data,
-            grad: 0.0,
-            operands: vec![self.clone(), rhs.clone()],
-            operator: Operator::Mul,
-        })))
-    }
-}
-
-impl Div for MutableValue {
-    type Output = MutableValue;
-
-    fn div(self, rhs: Self) -> Self::Output {
-        let lhsv = self.0.borrow();
-        let rhsv = rhs.0.borrow();
-        MutableValue(Rc::new(RefCell::new(Value {
-            data: lhsv.data / rhsv.data,
-            grad: 0.0,
-            operands: vec![self.clone(), rhs.clone()],
-            operator: Operator::Div,
-        })))
-    }
-}
-
-impl Display for MutableValue {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Value({})", self.0.borrow().data)
-    }
-}
-
-impl Debug for MutableValue {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let val = self.0.borrow();
-        write!(f, "Value(data:{}, grad:{})", val.data, val.grad)
-    }
-}
-
-impl Display for Value {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Value({})", self.data)
-    }
-}
-
-impl Debug for Value {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Value(data:{}, grad:{})", self.data, self.grad)
     }
 }
