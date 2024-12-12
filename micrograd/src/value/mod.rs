@@ -7,8 +7,8 @@ pub mod data_type;
 pub mod display;
 pub mod div;
 pub mod mul;
+pub mod others;
 pub mod sub;
-pub mod tanh;
 
 /*
 Note:
@@ -53,6 +53,8 @@ enum Operator {
     Mul,
     Div,
     Tanh,
+    Exp,
+    Pow,
 }
 
 pub struct Value {
@@ -60,6 +62,7 @@ pub struct Value {
     grad: DataType, // grad(global gradient) field will have gradient of final output with respect to the Value(Self).
     operands: Vec<MutableValue>,
     operator: Operator,
+    label: String,
 }
 
 // we need Rc, because we need to allow reuse of instance of MutableValue.
@@ -78,6 +81,16 @@ impl Value {
             grad: 0.0,
             operands: vec![],
             operator: Operator::None,
+            label: String::new(),
+        })))
+    }
+    pub fn new_lab<T: IntoValue>(data: T, label: String) -> MutableValue {
+        MutableValue(Rc::new(RefCell::new(Value {
+            data: data.into_value(),
+            grad: 0.0,
+            operands: vec![],
+            operator: Operator::None,
+            label,
         })))
     }
 
@@ -155,7 +168,25 @@ impl Value {
                     let mut input = out.operands[0].0.borrow_mut();
 
                     // y = tahh(x) then dy/dx = 1 - (tanh(x))^2
-                    input.grad += 1.0 - (out.data * out.data);
+                    input.grad += out.grad * (1.0 - (out.data * out.data));
+                }
+            }
+            Operator::Exp => {
+                if out.operands.len() == 1 {
+                    let mut input = out.operands[0].0.borrow_mut();
+
+                    println!("grad:{}, value:{}", out.grad, out.data);
+                    // y = exp(x) then dy/dx = exp(x)
+                    input.grad += out.grad * out.data;
+                }
+            }
+            Operator::Pow => {
+                if out.operands.len() == 2 {
+                    let mut input = out.operands[0].0.borrow_mut();
+                    let powv = out.operands[1].0.borrow().data;
+
+                    // y = x^n then dy/dx = n * x^(n-1)
+                    input.grad += out.grad * (powv * input.data.powf(powv - 1.0));
                 }
             }
             Operator::None => {}

@@ -4,6 +4,11 @@ pub fn _run_all_examples() {
     _micrograd_simple();
     _micrograd_clone1();
     _micrograd_clone2();
+
+    // power example
+    // let m = Value::new(2);
+    // let w3 = m.clone().pow(5);
+    // println!("pow: {}", w3);
 }
 
 pub fn _micrograd_simple() {

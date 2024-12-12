@@ -9,14 +9,15 @@ impl Div for MutableValue {
     type Output = MutableValue;
 
     fn div(self, rhs: Self) -> Self::Output {
-        let lhsv = self.0.borrow().data;
-        let rhsv = rhs.0.borrow().data;
+        let lhsv = self.0.borrow();
+        let rhsv = rhs.0.borrow();
 
         MutableValue(Rc::new(RefCell::new(Value {
-            data: lhsv / rhsv,
+            data: lhsv.data / rhsv.data,
             grad: 0.0,
             operands: vec![self.clone(), rhs.clone()],
             operator: Operator::Div,
+            label: format!("{}/{}", lhsv.label, rhsv.label),
         })))
     }
 }
@@ -32,15 +33,17 @@ impl Div<MutableValue> for DataType {
             grad: 0.0,
             operands: vec![],
             operator: Operator::None,
+            label: String::new(),
         })));
 
-        let rhsv = rhs.0.borrow().data;
+        let rhsv = rhs.0.borrow();
 
         MutableValue(Rc::new(RefCell::new(Value {
-            data: lhsv / rhsv,
+            data: lhsv / rhsv.data,
             grad: 0.0,
             operands: vec![lhs, rhs.clone()],
             operator: Operator::Div,
+            label: format!("{}/{}", lhsv, rhsv.label),
         })))
     }
 }
@@ -54,7 +57,7 @@ where
 
     fn div(self, rhs: T) -> Self::Output {
         let lhs = self;
-        let lhsv = lhs.0.borrow().data;
+        let lhsv = lhs.0.borrow();
 
         let rhsv = rhs.into_value();
         let rhs = MutableValue(Rc::new(RefCell::new(Value {
@@ -62,13 +65,15 @@ where
             grad: 0.0,
             operands: vec![],
             operator: Operator::None,
+            label: String::new(),
         })));
 
         MutableValue(Rc::new(RefCell::new(Value {
-            data: lhsv / rhsv,
+            data: lhsv.data / rhsv,
             grad: 0.0,
             operands: vec![lhs.clone(), rhs],
             operator: Operator::Div,
+            label: format!("{}/{}", lhsv.label, rhsv),
         })))
     }
 }
