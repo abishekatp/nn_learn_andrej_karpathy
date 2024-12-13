@@ -13,8 +13,8 @@ impl Debug for MutableValue {
         let val = self.0.borrow();
         write!(
             f,
-            "Value({},data:{}, grad:{})",
-            val.label, val.data, val.grad
+            "Value(data:{}, grad:{}, {})",
+            val.data, val.grad, val.label,
         )
     }
 }
@@ -29,8 +29,8 @@ impl Debug for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "Value({},data:{}, grad:{})",
-            self.label, self.data, self.grad
+            "Value(data:{}, grad:{}, {})",
+            self.data, self.grad, self.label,
         )
     }
 }

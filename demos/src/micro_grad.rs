@@ -1,24 +1,20 @@
 use micrograd::Value;
 
 pub fn _run_all_examples() {
-    _micrograd_simple();
-    _micrograd_clone1();
-    _micrograd_clone2();
-
-    // power example
-    // let m = Value::new(2);
-    // let w3 = m.clone().pow(5);
-    // println!("pow: {}", w3);
+    // _micrograd_simple1();
+    _micrograd_simple2();
+    // _micrograd_clone1();
+    // _micrograd_clone2();
 }
 
-pub fn _micrograd_simple() {
+pub fn _micrograd_simple1() {
     // inputs
-    let x1 = Value::new(2);
-    let x2 = Value::new(0);
+    let x1 = Value::new_lab(2, "x1");
+    let x2 = Value::new_lab(0, "x2");
 
     // weights
-    let w1 = Value::new(-3);
-    let w2 = Value::new(1);
+    let w1 = Value::new_lab(-3, "w1");
+    let w2 = Value::new_lab(1, "w2");
 
     // bias of the neuron.
     let b = 6.8813735870195432;
@@ -28,17 +24,39 @@ pub fn _micrograd_simple() {
     let x1w1x2w2 = x1w1 + x2w2;
     let n = x1w1x2w2 + b;
     let mut o = n.tanh();
-    o.backward();
-    println!("x1:{:?}, w1:{:?}", x1, w1);
-    println!("x2:{:?}, w2:{:?}", x2, w2);
+    o.backward_debug();
+}
+
+pub fn _micrograd_simple2() {
+    // inputs
+    let x1 = Value::new_lab(2, "x1");
+    let x2 = Value::new_lab(0, "x2");
+
+    // weights
+    let w1 = Value::new_lab(-3, "w1");
+    let w2 = Value::new_lab(1, "w2");
+
+    // bias of the neuron.
+    let b = 6.8813735870195432;
+
+    let x1w1 = x1.clone() * w1.clone();
+    let x2w2 = x2.clone() * w2.clone();
+    let x1w1x2w2 = x1w1 + x2w2;
+    let n = x1w1x2w2 + b;
+
+    // tanh(x) = (e^2x - 1)/(e^2x + 1)
+    let dd = n.clone() * 2.0;
+    let exp = dd.clone().exp();
+    let mut o = (exp.clone() - 1) / (exp.clone() + 1);
+
+    o.backward_debug();
 }
 
 pub fn _micrograd_clone1() {
     // inputs
     let a = Value::new(2);
     let mut b = a.clone() + a.clone();
-    b.backward();
-    println!("a:{:?}", a)
+    b.backward_debug();
 }
 
 pub fn _micrograd_clone2() {
@@ -49,6 +67,5 @@ pub fn _micrograd_clone2() {
     let d = a.clone() * b.clone();
     let e = a.clone() + b.clone();
     let mut f = d * e;
-    f.backward();
-    println!("a:{:?}, b:{:?}", a, b)
+    f.backward_debug();
 }

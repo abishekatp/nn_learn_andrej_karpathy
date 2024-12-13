@@ -17,7 +17,7 @@ impl Add for MutableValue {
             grad: 0.0,
             operands: vec![self.clone(), rhs.clone()],
             operator: Operator::Plus,
-            label: format!("{}+{}", lhsv.label, rhsv.label),
+            label: format!("({}+{})", lhsv.label, rhsv.label),
         })))
     }
 }
@@ -44,7 +44,7 @@ impl Add<MutableValue> for DataType {
             grad: 0.0,
             operands: vec![lhs, rhs.clone()],
             operator: Operator::Plus,
-            label: format!("{}+{}", lhsv, rhsv.label),
+            label: format!("({}+{})", lhsv, rhsv.label),
         })))
     }
 }
@@ -74,7 +74,7 @@ where
             grad: 0.0,
             operands: vec![lhs.clone(), rhs],
             operator: Operator::Plus,
-            label: format!("{}+{}", lhsv.label, rhsv),
+            label: format!("({}+{})", lhsv.label, rhsv),
         })))
     }
 }

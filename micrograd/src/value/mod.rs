@@ -84,21 +84,19 @@ impl Value {
             label: String::new(),
         })))
     }
-    pub fn new_lab<T: IntoValue>(data: T, label: String) -> MutableValue {
+    pub fn new_lab<T: IntoValue>(data: T, label: &str) -> MutableValue {
         MutableValue(Rc::new(RefCell::new(Value {
             data: data.into_value(),
             grad: 0.0,
             operands: vec![],
             operator: Operator::None,
-            label,
+            label: label.to_string(),
         })))
     }
 
     // calling compute gradient on a output value will comput the gradient value
     // w.r.t each one of its operands and store those gradients in the corresponding operands objects.
     fn comput_gradient(&mut self) {
-        // println!("{:?}: {:?}", self.operator, self);
-
         /*
              If you use the same Value in two places, then it's gradient will be
              the accumulated sum of gradients of all the places it has been used.
@@ -175,7 +173,6 @@ impl Value {
                 if out.operands.len() == 1 {
                     let mut input = out.operands[0].0.borrow_mut();
 
-                    println!("grad:{}, value:{}", out.grad, out.data);
                     // y = exp(x) then dy/dx = exp(x)
                     input.grad += out.grad * out.data;
                 }
@@ -195,6 +192,30 @@ impl Value {
 }
 
 impl MutableValue {
+    pub fn backward_debug(&mut self) {
+        let mut val = self.0.borrow_mut();
+        // set the gradient of output node as 1.(because making a small change in the output value will directly change the output value itself)
+        val.grad = 1.0;
+        // compute its children gradients
+        val.comput_gradient();
+        println!("{:?}", val);
+
+        val.operands.iter_mut().for_each(|op| {
+            op.backward_internal_debug();
+            println!("{:?}", op);
+        });
+    }
+
+    fn backward_internal_debug(&mut self) {
+        let mut val = self.0.borrow_mut();
+        val.comput_gradient();
+        println!("{:?}", val);
+
+        val.operands.iter_mut().for_each(|op| {
+            op.backward_internal_debug();
+            println!("{:?}", op);
+        });
+    }
     pub fn backward(&mut self) {
         let mut val = self.0.borrow_mut();
         // set the gradient of output node as 1.(because making a small change in the output value will directly change the output value itself)
