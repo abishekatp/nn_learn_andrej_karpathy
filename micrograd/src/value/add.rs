@@ -18,6 +18,7 @@ impl Add for MutableValue {
             operands: vec![self.clone(), rhs.clone()],
             operator: Operator::Plus,
             label: format!("({}+{})", lhsv.label, rhsv.label),
+            visited: false,
         })))
     }
 }
@@ -35,6 +36,7 @@ impl Add<MutableValue> for DataType {
             operands: vec![],
             operator: Operator::None,
             label: String::new(),
+            visited: false,
         })));
 
         let rhsv = rhs.0.borrow();
@@ -45,6 +47,7 @@ impl Add<MutableValue> for DataType {
             operands: vec![lhs, rhs.clone()],
             operator: Operator::Plus,
             label: format!("({}+{})", lhsv, rhsv.label),
+            visited: false,
         })))
     }
 }
@@ -67,6 +70,7 @@ where
             operands: vec![],
             operator: Operator::None,
             label: String::new(),
+            visited: false,
         })));
 
         MutableValue(Rc::new(RefCell::new(Value {
@@ -75,6 +79,7 @@ where
             operands: vec![lhs.clone(), rhs],
             operator: Operator::Plus,
             label: format!("({}+{})", lhsv.label, rhsv),
+            visited: false,
         })))
     }
 }

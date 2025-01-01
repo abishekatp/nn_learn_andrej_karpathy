@@ -62,7 +62,9 @@ pub struct Value {
     grad: DataType, // grad(global gradient) field will have gradient of final output with respect to the Value(Self).
     operands: Vec<MutableValue>,
     operator: Operator,
+    // for debugging purpose
     label: String,
+    visited: bool,
 }
 
 // we need Rc, because we need to allow reuse of instance of MutableValue.
@@ -82,6 +84,7 @@ impl Value {
             operands: vec![],
             operator: Operator::None,
             label: String::new(),
+            visited: false,
         })))
     }
     pub fn new_lab<T: IntoValue>(data: T, label: &str) -> MutableValue {
@@ -91,6 +94,7 @@ impl Value {
             operands: vec![],
             operator: Operator::None,
             label: label.to_string(),
+            visited: false,
         })))
     }
 
@@ -155,7 +159,7 @@ impl Value {
                     // y=x/z then dy/dx = 1/z and dy/dz = -x/y^2.
                     if let Ok(mut denominator) = out.operands[1].0.try_borrow_mut() {
                         numerator.grad += out.grad * 1.0 / denominator.data;
-                        denominator.grad += out.grad * -1.0 * numerator.data
+                        denominator.grad += (out.grad * -1.0 * numerator.data)
                             / (denominator.data * denominator.data);
                     }
                     // else case: if y = x/x, then dy/dx = 0
@@ -193,47 +197,65 @@ impl Value {
 
 impl MutableValue {
     pub fn backward_debug(&mut self) {
-        let mut val = self.0.borrow_mut();
-        // set the gradient of output node as 1.(because making a small change in the output value will directly change the output value itself)
-        val.grad = 1.0;
-        // compute its children gradients
-        val.comput_gradient();
-        println!("{:?}", val);
+        let mut all_nodes = self.collect_operands();
+        all_nodes.reverse();
 
-        val.operands.iter_mut().for_each(|op| {
-            op.backward_internal_debug();
-            println!("{:?}", op);
-        });
+        // set the gradient of the root node to 1 since gradient with itself is 1.
+        if let Some(first) = all_nodes.get(0) {
+            let mut val = first.0.borrow_mut();
+            val.grad = 1.0;
+
+            val.comput_gradient();
+            println!("{:?}", val)
+        }
+        for i in 1..all_nodes.len() {
+            if let Some(el) = all_nodes.get(i) {
+                let mut val = el.0.borrow_mut();
+                val.comput_gradient();
+                println!("{:?}", val)
+            }
+        }
     }
 
-    fn backward_internal_debug(&mut self) {
-        let mut val = self.0.borrow_mut();
-        val.comput_gradient();
-        println!("{:?}", val);
-
-        val.operands.iter_mut().for_each(|op| {
-            op.backward_internal_debug();
-            println!("{:?}", op);
-        });
-    }
     pub fn backward(&mut self) {
-        let mut val = self.0.borrow_mut();
-        // set the gradient of output node as 1.(because making a small change in the output value will directly change the output value itself)
-        val.grad = 1.0;
-        // compute its children gradients
-        val.comput_gradient();
+        let mut all_nodes = self.collect_operands();
+        all_nodes.reverse();
 
-        val.operands.iter_mut().for_each(|op| {
-            op.backward_internal();
-        });
+        // set the gradient of the root node to 1 since gradient with itself is 1.
+        if let Some(first) = all_nodes.get(0) {
+            let mut val = first.0.borrow_mut();
+            val.grad = 1.0;
+
+            val.comput_gradient();
+        }
+        for i in 1..all_nodes.len() {
+            if let Some(el) = all_nodes.get(i) {
+                let mut val = el.0.borrow_mut();
+                val.comput_gradient();
+            }
+        }
     }
 
-    fn backward_internal(&mut self) {
-        let mut val = self.0.borrow_mut();
-        val.comput_gradient();
+    // collect all the node references in the breadth first search(BFS) manner.
+    /*
+      We have to use the topological order here. otherwise if the same node is
+      re-used two times in two different places, then all its nested operands(children) will be
+      called twice. To avoide this issue we use topological order and check weather each node is
+      visited before exploring all its children.
+    */
+    pub fn collect_operands(&self) -> Vec<MutableValue> {
+        let mut all_nodes = vec![];
 
-        val.operands.iter_mut().for_each(|op| {
-            op.backward_internal();
-        });
+        // if not already visited, then collect all of its children.
+        let mut val = self.0.borrow_mut();
+        if !val.visited {
+            val.visited = true;
+            val.operands.iter().for_each(|op| {
+                let mut children = op.collect_operands();
+                all_nodes.append(&mut children);
+            });
+            all_nodes.push(self.clone());
+        }
+        all_nodes
     }
 }

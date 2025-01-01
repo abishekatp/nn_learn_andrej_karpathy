@@ -10,6 +10,7 @@ impl MutableValue {
             operands: vec![self.clone()],
             operator: Operator::Tanh,
             label: format!("tanh({})", val),
+            visited: false,
         })))
     }
 
@@ -21,6 +22,7 @@ impl MutableValue {
             operands: vec![self.clone()],
             operator: Operator::Exp,
             label: format!("exp({})", val),
+            visited: false,
         })))
     }
 
@@ -34,6 +36,7 @@ impl MutableValue {
             operands: vec![],
             operator: Operator::None,
             label: String::new(),
+            visited: false,
         })));
 
         MutableValue(Rc::new(RefCell::new(Value {
@@ -42,6 +45,7 @@ impl MutableValue {
             operands: vec![self.clone(), power],
             operator: Operator::Pow,
             label: format!("pow({},{})", val, powv),
+            visited: false,
         })))
     }
 }
