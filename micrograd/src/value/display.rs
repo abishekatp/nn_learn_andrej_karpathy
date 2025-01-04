@@ -1,14 +1,14 @@
 use std::fmt::{Debug, Display};
 
-use super::{MutableValue, Value};
+use super::{MVal, Value};
 
-impl Display for MutableValue {
+impl Display for MVal {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Value({})", self.0.borrow().data)
     }
 }
 
-impl Debug for MutableValue {
+impl Debug for MVal {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let val = self.0.borrow();
         write!(

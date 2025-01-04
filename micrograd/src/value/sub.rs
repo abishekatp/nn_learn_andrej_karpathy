@@ -1,18 +1,18 @@
 use super::{
     data_type::{DataType, IntoValue},
-    MutableValue, Operator, Value,
+    MVal, Operator, Value,
 };
 use std::{cell::RefCell, ops::Sub, rc::Rc};
 
-// MutableValue - MutableValue
-impl Sub for MutableValue {
-    type Output = MutableValue;
+// MVal - MVal
+impl Sub for MVal {
+    type Output = MVal;
 
     fn sub(self, rhs: Self) -> Self::Output {
         let lhsv = self.0.borrow();
         let rhsv = rhs.0.borrow();
 
-        MutableValue(Rc::new(RefCell::new(Value {
+        MVal(Rc::new(RefCell::new(Value {
             data: lhsv.data - rhsv.data,
             grad: 0.0,
             operands: vec![self.clone(), rhs.clone()],
@@ -23,13 +23,13 @@ impl Sub for MutableValue {
     }
 }
 
-// DataType - MutableValue
-impl Sub<MutableValue> for DataType {
-    type Output = MutableValue;
+// DataType - MVal
+impl Sub<MVal> for DataType {
+    type Output = MVal;
 
-    fn sub(self, rhs: MutableValue) -> Self::Output {
+    fn sub(self, rhs: MVal) -> Self::Output {
         let lhsv = self;
-        let lhs = MutableValue(Rc::new(RefCell::new(Value {
+        let lhs = MVal(Rc::new(RefCell::new(Value {
             data: lhsv,
             grad: 0.0,
             operands: vec![],
@@ -40,7 +40,7 @@ impl Sub<MutableValue> for DataType {
 
         let rhsv = rhs.0.borrow();
 
-        MutableValue(Rc::new(RefCell::new(Value {
+        MVal(Rc::new(RefCell::new(Value {
             data: lhsv - rhsv.data,
             grad: 0.0,
             operands: vec![lhs, rhs.clone()],
@@ -51,19 +51,19 @@ impl Sub<MutableValue> for DataType {
     }
 }
 
-// MutableValue - T
-impl<T> Sub<T> for MutableValue
+// MVal - T
+impl<T> Sub<T> for MVal
 where
     T: IntoValue,
 {
-    type Output = MutableValue;
+    type Output = MVal;
 
     fn sub(self, rhs: T) -> Self::Output {
         let lhs = self;
         let lhsv = lhs.0.borrow();
 
         let rhsv = rhs.into_value();
-        let rhs = MutableValue(Rc::new(RefCell::new(Value {
+        let rhs = MVal(Rc::new(RefCell::new(Value {
             data: rhsv,
             grad: 0.0,
             operands: vec![],
@@ -72,7 +72,7 @@ where
             visited: false,
         })));
 
-        MutableValue(Rc::new(RefCell::new(Value {
+        MVal(Rc::new(RefCell::new(Value {
             data: lhsv.data - rhsv,
             grad: 0.0,
             operands: vec![lhs.clone(), rhs],

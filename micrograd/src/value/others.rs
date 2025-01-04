@@ -1,10 +1,10 @@
-use super::{data_type::IntoValue, MutableValue, Operator, Value};
+use super::{data_type::IntoValue, MVal, Operator, Value};
 use std::{cell::RefCell, rc::Rc};
 
-impl MutableValue {
-    pub fn tanh(self) -> MutableValue {
+impl MVal {
+    pub fn tanh(self) -> MVal {
         let val = self.0.borrow().data;
-        MutableValue(Rc::new(RefCell::new(Value {
+        MVal(Rc::new(RefCell::new(Value {
             data: val.tanh(),
             grad: 0.0,
             operands: vec![self.clone()],
@@ -14,9 +14,9 @@ impl MutableValue {
         })))
     }
 
-    pub fn exp(self) -> MutableValue {
+    pub fn exp(self) -> MVal {
         let val = self.0.borrow().data;
-        MutableValue(Rc::new(RefCell::new(Value {
+        MVal(Rc::new(RefCell::new(Value {
             data: val.exp(),
             grad: 0.0,
             operands: vec![self.clone()],
@@ -26,11 +26,11 @@ impl MutableValue {
         })))
     }
 
-    pub fn pow<T: IntoValue>(self, other: T) -> MutableValue {
+    pub fn pow<T: IntoValue>(self, other: T) -> MVal {
         let val = self.0.borrow().data;
 
         let powv = other.into_value();
-        let power = MutableValue(Rc::new(RefCell::new(Value {
+        let power = MVal(Rc::new(RefCell::new(Value {
             data: powv,
             grad: 0.0,
             operands: vec![],
@@ -39,7 +39,7 @@ impl MutableValue {
             visited: false,
         })));
 
-        MutableValue(Rc::new(RefCell::new(Value {
+        MVal(Rc::new(RefCell::new(Value {
             data: val.powf(powv),
             grad: 0.0,
             operands: vec![self.clone(), power],

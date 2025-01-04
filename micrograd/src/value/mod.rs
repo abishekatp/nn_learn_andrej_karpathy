@@ -60,42 +60,51 @@ enum Operator {
 pub struct Value {
     data: DataType,
     grad: DataType, // grad(global gradient) field will have gradient of final output with respect to the Value(Self).
-    operands: Vec<MutableValue>,
+    operands: Vec<MVal>,
     operator: Operator,
     // for debugging purpose
     label: String,
     visited: bool,
 }
 
-// we need Rc, because we need to allow reuse of instance of MutableValue.
-// we need RcCell, because we need to mutate the grad field in the Value for each MutableValue
-/// Cloning of MutableValue is a cheap operation since it is acutally wrapper around Rc and RefCell
+// we need Rc, because we need to allow reuse of instance of MVal.
+// we need RcCell, because we need to mutate the grad field in the Value for each MVal
+/// Cloning of MVal(MutableValue) is a cheap operation since it is acutally wrapper around Rc and RefCell
 /// because of the same if you try to use the same Value in two places, then
 /// it's gradient will be the accumulated sum of gradients of all the places it has been used.
 #[derive(Clone)]
-pub struct MutableValue(Rc<RefCell<Value>>);
+pub struct MVal(Rc<RefCell<Value>>);
+
+impl MVal {
+    pub fn new<T: IntoValue>(data: T) -> Self {
+        Self(Rc::new(RefCell::new(Value::new(data))))
+    }
+    pub fn new_lab<T: IntoValue>(data: T, label: &str) -> Self {
+        Self(Rc::new(RefCell::new(Value::new_lab(data, label))))
+    }
+}
 
 impl Value {
-    /// Cloning of returned value(MutableValue) is a cheap operation since it is acutally wrapper around Rc and RefCell
-    pub fn new<T: IntoValue>(data: T) -> MutableValue {
-        MutableValue(Rc::new(RefCell::new(Value {
+    /// Cloning of returned value(MVal) is a cheap operation since it is acutally wrapper around Rc and RefCell
+    pub fn new<T: IntoValue>(data: T) -> Self {
+        Self {
             data: data.into_value(),
             grad: 0.0,
             operands: vec![],
             operator: Operator::None,
             label: String::new(),
             visited: false,
-        })))
+        }
     }
-    pub fn new_lab<T: IntoValue>(data: T, label: &str) -> MutableValue {
-        MutableValue(Rc::new(RefCell::new(Value {
+    pub fn new_lab<T: IntoValue>(data: T, label: &str) -> Self {
+        Self {
             data: data.into_value(),
             grad: 0.0,
             operands: vec![],
             operator: Operator::None,
             label: label.to_string(),
             visited: false,
-        })))
+        }
     }
 
     // calling compute gradient on a output value will comput the gradient value
@@ -195,7 +204,7 @@ impl Value {
     }
 }
 
-impl MutableValue {
+impl MVal {
     pub fn backward_debug(&mut self) {
         let mut all_nodes = self.collect_operands();
         all_nodes.reverse();
@@ -243,7 +252,7 @@ impl MutableValue {
       called twice. To avoide this issue we use topological order and check weather each node is
       visited before exploring all its children.
     */
-    pub fn collect_operands(&self) -> Vec<MutableValue> {
+    pub fn collect_operands(&self) -> Vec<MVal> {
         let mut all_nodes = vec![];
 
         // if not already visited, then collect all of its children.
@@ -257,5 +266,18 @@ impl MutableValue {
             all_nodes.push(self.clone());
         }
         all_nodes
+    }
+
+    // set all the gradient values to zero
+    pub fn zero_grad(&self) {
+        // if not already visited, then collect all of its children.
+        let mut val = self.0.borrow_mut();
+        val.grad = 0.0;
+        if !val.visited {
+            val.visited = true;
+            val.operands.iter().for_each(|op| {
+                op.zero_grad();
+            });
+        }
     }
 }

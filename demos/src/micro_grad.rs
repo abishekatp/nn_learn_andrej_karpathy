@@ -1,4 +1,4 @@
-use micrograd::Value;
+use micrograd::MVal;
 
 pub fn _run_all_examples() {
     // _micrograd_simple1();
@@ -9,12 +9,12 @@ pub fn _run_all_examples() {
 
 pub fn _micrograd_simple1() {
     // inputs
-    let x1 = Value::new_lab(2, "x1");
-    let x2 = Value::new_lab(0, "x2");
+    let x1 = MVal::new_lab(2, "x1");
+    let x2 = MVal::new_lab(0, "x2");
 
     // weights
-    let w1 = Value::new_lab(-3, "w1");
-    let w2 = Value::new_lab(1, "w2");
+    let w1 = MVal::new_lab(-3, "w1");
+    let w2 = MVal::new_lab(1, "w2");
 
     // bias of the neuron.
     let b = 6.8813735870195432;
@@ -29,12 +29,12 @@ pub fn _micrograd_simple1() {
 
 pub fn _micrograd_simple2() {
     // inputs
-    let x1 = Value::new_lab(2, "x1");
-    let x2 = Value::new_lab(0, "x2");
+    let x1 = MVal::new_lab(2, "x1");
+    let x2 = MVal::new_lab(0, "x2");
 
     // weights
-    let w1 = Value::new_lab(-3, "w1");
-    let w2 = Value::new_lab(1, "w2");
+    let w1 = MVal::new_lab(-3, "w1");
+    let w2 = MVal::new_lab(1, "w2");
 
     // bias of the neuron.
     let b = 6.8813735870195432;
@@ -54,15 +54,15 @@ pub fn _micrograd_simple2() {
 
 pub fn _micrograd_clone1() {
     // inputs
-    let a = Value::new(2);
+    let a = MVal::new_lab(2, "a");
     let mut b = a.clone() + a;
     b.backward_debug();
 }
 
 pub fn _micrograd_clone2() {
     // inputs
-    let a = Value::new(-2);
-    let b = Value::new(3);
+    let a = MVal::new_lab(-2, "a");
+    let b = MVal::new_lab(3, "b");
 
     let d = a.clone() * b.clone();
     let e = a + b;

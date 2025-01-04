@@ -1,3 +1,5 @@
+mod nn;
 mod value;
 
-pub use value::Value;
+pub use nn::Neuron;
+pub use value::MVal;
