@@ -10,7 +10,6 @@ impl MVal {
             operands: vec![self.clone()],
             operator: Operator::Tanh,
             label: format!("tanh({})", val),
-            visited: false,
         })))
     }
 
@@ -22,7 +21,6 @@ impl MVal {
             operands: vec![self.clone()],
             operator: Operator::Exp,
             label: format!("exp({})", val),
-            visited: false,
         })))
     }
 
@@ -36,7 +34,6 @@ impl MVal {
             operands: vec![],
             operator: Operator::None,
             label: String::new(),
-            visited: false,
         })));
 
         MVal(Rc::new(RefCell::new(Value {
@@ -45,7 +42,6 @@ impl MVal {
             operands: vec![self.clone(), power],
             operator: Operator::Pow,
             label: format!("pow({},{})", val, powv),
-            visited: false,
         })))
     }
 }

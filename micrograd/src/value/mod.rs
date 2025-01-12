@@ -1,4 +1,10 @@
-use std::{cell::RefCell, fmt::Debug, rc::Rc};
+use std::{
+    cell::RefCell,
+    collections::HashSet,
+    fmt::Debug,
+    hash::{Hash, Hasher},
+    rc::Rc,
+};
 
 use data_type::{DataType, IntoValue};
 
@@ -64,11 +70,12 @@ pub struct Value {
     operator: Operator,
     // for debugging purpose
     label: String,
-    visited: bool,
 }
 
-// we need Rc, because we need to allow reuse of instance of MVal.
-// we need RcCell, because we need to mutate the grad field in the Value for each MVal
+/// If you apply any of the +, -, *, / operation on the MVal, then it will return the new instance of MVal with the result.
+/// Remember that assignment operator will make the Mval instance to point to the new address.
+/// we need Rc, because we need to allow reuse of instance of MVal in multiple places.
+/// we need RefCell, because we need to mutate the grad field in the Value for each MVal
 /// Cloning of MVal(MutableValue) is a cheap operation since it is acutally wrapper around Rc and RefCell
 /// because of the same if you try to use the same Value in two places, then
 /// it's gradient will be the accumulated sum of gradients of all the places it has been used.
@@ -82,6 +89,25 @@ impl MVal {
     pub fn new_lab<T: IntoValue>(data: T, label: &str) -> Self {
         Self(Rc::new(RefCell::new(Value::new_lab(data, label))))
     }
+    pub fn default() -> Self {
+        Self(Rc::new(RefCell::new(Value::new(0))))
+    }
+
+    pub fn grad(&self) -> DataType {
+        self.0.borrow().grad
+    }
+    /// to mutate the gradient inplace instead creating new instance.
+    pub fn set_grad(&self, val: MVal) {
+        self.0.borrow_mut().grad = val.grad();
+    }
+
+    pub fn get(&self) -> DataType {
+        self.0.borrow().data
+    }
+    /// to mutate the data inplace instead creating new instance.
+    pub fn set(&self, val: MVal) {
+        self.0.borrow_mut().data = val.get();
+    }
 }
 
 impl Value {
@@ -93,7 +119,6 @@ impl Value {
             operands: vec![],
             operator: Operator::None,
             label: String::new(),
-            visited: false,
         }
     }
     pub fn new_lab<T: IntoValue>(data: T, label: &str) -> Self {
@@ -103,12 +128,12 @@ impl Value {
             operands: vec![],
             operator: Operator::None,
             label: label.to_string(),
-            visited: false,
         }
     }
 
     // calling compute gradient on a output value will comput the gradient value
     // w.r.t each one of its operands and store those gradients in the corresponding operands objects.
+    /// updated the gradient values inplace.
     fn comput_gradient(&mut self) {
         /*
              If you use the same Value in two places, then it's gradient will be
@@ -205,6 +230,7 @@ impl Value {
 }
 
 impl MVal {
+    /// update the gradient values inplace.
     pub fn backward_debug(&mut self) {
         let mut all_nodes = self.collect_operands();
         all_nodes.reverse();
@@ -226,6 +252,7 @@ impl MVal {
         }
     }
 
+    /// update the gradient values inplace.
     pub fn backward(&mut self) {
         let mut all_nodes = self.collect_operands();
         all_nodes.reverse();
@@ -245,6 +272,11 @@ impl MVal {
         }
     }
 
+    pub fn collect_operands(&self) -> Vec<MVal> {
+        let mut visited = HashSet::new();
+        self.collect_operands_inner(&mut visited)
+    }
+
     // collect all the node references in the breadth first search(BFS) manner.
     /*
       We have to use the topological order here. otherwise if the same node is
@@ -252,15 +284,15 @@ impl MVal {
       called twice. To avoide this issue we use topological order and check weather each node is
       visited before exploring all its children.
     */
-    pub fn collect_operands(&self) -> Vec<MVal> {
+    pub fn collect_operands_inner(&self, visited: &mut HashSet<MVal>) -> Vec<MVal> {
         let mut all_nodes = vec![];
 
         // if not already visited, then collect all of its children.
-        let mut val = self.0.borrow_mut();
-        if !val.visited {
-            val.visited = true;
+        let val = self.0.borrow();
+        if !visited.contains(self) {
+            visited.insert(self.clone());
             val.operands.iter().for_each(|op| {
-                let mut children = op.collect_operands();
+                let mut children = op.collect_operands_inner(visited);
                 all_nodes.append(&mut children);
             });
             all_nodes.push(self.clone());
@@ -268,16 +300,38 @@ impl MVal {
         all_nodes
     }
 
-    // set all the gradient values to zero
     pub fn zero_grad(&self) {
+        let mut visited = HashSet::new();
+        self.zero_grad_inner(&mut visited);
+    }
+
+    // set all the gradient values to zero
+    pub fn zero_grad_inner(&self, visited: &mut HashSet<MVal>) {
         // if not already visited, then collect all of its children.
         let mut val = self.0.borrow_mut();
         val.grad = 0.0;
-        if !val.visited {
-            val.visited = true;
+        if !visited.contains(self) {
+            visited.insert(self.clone());
             val.operands.iter().for_each(|op| {
-                op.zero_grad();
+                op.zero_grad_inner(visited);
             });
         }
     }
 }
+
+// Implement Hash based on the address of the Rc
+impl Hash for MVal {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        let ptr = Rc::as_ptr(&self.0) as *const (); // Get raw pointer address
+        ptr.hash(state);
+    }
+}
+
+// Implement Eq and PartialEq based on the address of the Rc
+impl PartialEq for MVal {
+    fn eq(&self, other: &Self) -> bool {
+        Rc::as_ptr(&self.0) == Rc::as_ptr(&other.0)
+    }
+}
+
+impl Eq for MVal {}

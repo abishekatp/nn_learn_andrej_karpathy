@@ -18,7 +18,6 @@ impl Div for MVal {
             operands: vec![self.clone(), rhs.clone()],
             operator: Operator::Div,
             label: format!("({}/{})", lhsv.label, rhsv.label),
-            visited: false,
         })))
     }
 }
@@ -35,7 +34,6 @@ impl Div<MVal> for DataType {
             operands: vec![],
             operator: Operator::None,
             label: String::new(),
-            visited: false,
         })));
 
         let rhsv = rhs.0.borrow();
@@ -46,7 +44,6 @@ impl Div<MVal> for DataType {
             operands: vec![lhs, rhs.clone()],
             operator: Operator::Div,
             label: format!("({}/{})", lhsv, rhsv.label),
-            visited: false,
         })))
     }
 }
@@ -69,7 +66,6 @@ where
             operands: vec![],
             operator: Operator::None,
             label: String::new(),
-            visited: false,
         })));
 
         MVal(Rc::new(RefCell::new(Value {
@@ -78,7 +74,6 @@ where
             operands: vec![lhs.clone(), rhs],
             operator: Operator::Div,
             label: format!("({}/{})", lhsv.label, rhsv),
-            visited: false,
         })))
     }
 }
