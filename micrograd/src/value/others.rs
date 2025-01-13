@@ -13,6 +13,18 @@ impl MVal {
         })))
     }
 
+    // Rectified Linear Unit y = max(0,x)
+    pub fn relu(self) -> MVal {
+        let val = self.0.borrow().data;
+        MVal(Rc::new(RefCell::new(Value {
+            data: if val < 0.0 { 0.0 } else { val },
+            grad: 0.0,
+            operands: vec![self.clone()],
+            operator: Operator::ReLU,
+            label: format!("ReLU({})", val),
+        })))
+    }
+
     pub fn exp(self) -> MVal {
         let val = self.0.borrow().data;
         MVal(Rc::new(RefCell::new(Value {

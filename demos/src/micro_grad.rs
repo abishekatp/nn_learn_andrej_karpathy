@@ -109,6 +109,7 @@ pub fn _mlp_example() {
             ypred.push(ypre);
         }
 
+        // loss computed using mean squared value
         let mut loss = MVal::new(0);
         for (i, ypre) in ypred.into_iter().enumerate() {
             let yact = ys.get(i).unwrap_or(&0.0).clone();

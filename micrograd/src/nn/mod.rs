@@ -47,8 +47,8 @@ impl Neuron {
 
         match self.activation_type {
             ActivationType::Tanh => sum.tanh(),
+            ActivationType::ReLU => sum.relu(),
             ActivationType::Linear => sum,
-            ActivationType::ReLU => sum,
         }
     }
 

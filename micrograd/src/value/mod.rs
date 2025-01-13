@@ -59,6 +59,7 @@ enum Operator {
     Mul,
     Div,
     Tanh,
+    ReLU,
     Exp,
     Pow,
 }
@@ -205,6 +206,14 @@ impl Value {
 
                     // y = tahh(x) then dy/dx = 1 - (tanh(x))^2
                     input.grad += out.grad * (1.0 - (out.data * out.data));
+                }
+            }
+            Operator::ReLU => {
+                if out.operands.len() == 1 {
+                    let mut input = out.operands[0].0.borrow_mut();
+
+                    // ReLU y = max(0,x). dy/dx = 1 for x > 0.
+                    input.grad += out.grad * (if out.data > 0.0 { 1.0 } else { 0.0 });
                 }
             }
             Operator::Exp => {
