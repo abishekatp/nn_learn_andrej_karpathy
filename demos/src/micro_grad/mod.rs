@@ -1,3 +1,7 @@
+mod binary_class;
+mod utils;
+pub use binary_class::_binary_classifier;
+
 use micrograd::{MVal, MLP};
 
 pub fn _run_all_examples() {
