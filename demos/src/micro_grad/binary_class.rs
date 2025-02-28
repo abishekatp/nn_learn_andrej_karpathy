@@ -1,5 +1,6 @@
 use crate::micro_grad::utils::{_scatter_plot, make_moons};
 use micrograd::{MVal, MLP};
+use ndarray::Array2;
 use plotters::prelude::LogScalable;
 
 pub fn _binary_classifier() {
@@ -69,8 +70,13 @@ pub fn _binary_classifier() {
         }
     }
 
+    _test_for_all_points(&model);
+    _test_for_generated(&model);
+}
+
+fn _test_for_generated(model: &MLP) {
     // make prediction for newly generated data
-    let (inps, outs) = make_moons(150, 0.2);
+    let (inps, outs) = make_moons(150, 0.5);
     println!("\nmaking the predictions:");
     let mut index = 0;
     let mut preds = vec![];
@@ -90,7 +96,6 @@ pub fn _binary_classifier() {
             .expect("expecting the output label for each input");
 
         println!("pred:{pre}, out:{out}");
-
         index += 1;
     }
 
@@ -98,9 +103,56 @@ pub fn _binary_classifier() {
         &inps,
         &preds,
         "Prediction Sample",
-        "./images/prediction.png",
+        "./images/prediction1.png",
     ) {
         dbg!(err);
         return;
     }
+}
+
+fn _test_for_all_points(model: &MLP) {
+    // make prediction for newly generated data
+    let inps = get_all_test_points();
+    println!("\nmaking the predictions:");
+
+    let mut preds = vec![];
+    for row in inps.rows() {
+        let v = row.to_vec();
+        // forward the model to get the prediction
+        // ypre is expected to be approximately equal to -1 or 1. This is what we are training the model for.
+        let pre = model
+            .forward(v)
+            .get(0)
+            .expect("expecting single output since the last layer has single neuron")
+            .clone();
+        preds.push(pre.get());
+
+        println!("pred:{pre}");
+    }
+
+    if let Err(err) = _scatter_plot(
+        &inps,
+        &preds,
+        "Prediction Sample",
+        "./images/prediction2.png",
+    ) {
+        dbg!(err);
+        return;
+    }
+}
+
+fn get_all_test_points() -> Array2<f64> {
+    let mut i = -2.5;
+    let mut inps = vec![];
+    while i < 3.0 {
+        let mut j = -1.0;
+        while j < 1.0 {
+            inps.push(vec![i, j]);
+            j += 0.1;
+        }
+        i += 0.1;
+    }
+
+    Array2::from_shape_vec((inps.len(), 2), inps.concat())
+        .expect("error constructing array from vector")
 }

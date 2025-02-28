@@ -86,9 +86,11 @@ pub fn _scatter_plot(
             (x, y),
             5,
             ShapeStyle {
-                color: if cat < -0.9 {
+                // here setting the negative and positive limits to as much close to -1 and 1
+                // as possible will show the most accurate predictions.
+                color: if cat < -0.5 {
                     BLUE.to_rgba()
-                } else if cat > 0.9 {
+                } else if cat > 0.5 {
                     GREEN.to_rgba()
                 } else {
                     RED.to_rgba()
