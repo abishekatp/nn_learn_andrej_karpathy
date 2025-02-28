@@ -17,21 +17,49 @@ pub mod others;
 pub mod sub;
 
 /*
-Note:
-- Each operation implemented on the Value object will have its own gradient value.
-- The gradient will tell you, how the small change in the input of the operator
-will affect its output. This is called local gradient of the operator.
-- We can construct a complex expression using multiple such operators,
-then we will have local gradient for each operator and also the global gradient.
-- global gradient is how the small change in the input of the particular operator will
-affetch the output of the overall expression.
+What is Value object:
+  Value is a fundamental unit of the neural network. All the logic is build
+on top of this Value Object. It will have the following properties.
+    - The ultimate purpose of a Value is storing some floating point number in the
+      `data` field and computing it gradient value w.r.t to some arbitrary Value that
+      is depending on it.
 
-- This can be calculated using the chain rule of derivative. Suppose assume the following
-example.
+    - Each operation(like addition, multiplication, division of two Value objects) that is
+      implemented on the Value will have its own corresponding gradient implementation.
 
-equation-1 -> C = A + B
-equation-2 -> F = (D * C) + E
-equation-3 -> O = F * G
+    - So the `grad` field of the curent Value object will store the gradient value w.r.t
+      the final output Value object that is depending on the current Value object.
+
+    - The global gradient of a Value will be equal to
+      gradient w.r.t its output Value(`data`) and its `data` multiplied by
+      the gradient of the output Value. This is based on the chain rule of derivation.
+
+    - The local gradient will tell you, how the small change in the `data` field of a Value
+      w.r.t a particular operation will affect its direct dependent Value's `data` field.
+      But remember that the `grad` field stores the global gradient of a Value.
+
+    - The global gradient will tell us how small change to the `data` field of a Value
+      will affect some arbitrary final output Value's `data` field that is depending on the current Value.
+
+Use case:
+    - We can construct a complex expression using multiple such Values and it's implemented operations,
+      then we can copute the global gradient of each of these Values using the back propogation.
+
+    - The Value is wrapped with Rc and RefCell to be able clone and reuse the same
+      Value as dependency of multiple arbitrary Values. The `grad` will store the
+      sum of all these gradient values w.r.t eahc one of its dependencies.
+
+    - Suppose we have the Value A, B, C and D. C = A + B and D = A * C. then the gradient
+      of A will be sum of gradient w.r.t D and C. This is because A will affect the final
+      output in two ways. The first way is through the addition with B and the second way
+      is through the multiplication with C.
+
+
+
+The chain rule of derivation can be explained as follows:
+    equation-1 -> C = A + B
+    equation-2 -> F = (D * C) + E
+    equation-3 -> O = F * G
 
 - Then the local derivative of equation-1 is dC/dA = 1 and dC/dB = 1. Similarly for equation-2 are
 dF/dD = C, dF/dC = D and dF/dE = 1. Similarly for equation-3 dO/dF = G and dO/dG = F.
@@ -48,7 +76,7 @@ C1 = A + B
 C2 = (A + h) + B
 dC/dA = (C2 - C1)/((A+h)-A) = (((A+h)+B) - (A+B)) / h = (A+h+B-A-B)/h = 1
 
-- Similarly we can derive the gradient of multiplication operator also.
+- Similarly we can derive the gradient of multiplication and other operators also.
 */
 
 #[derive(Debug)]
@@ -122,6 +150,7 @@ impl Value {
             label: String::new(),
         }
     }
+    /// new with label is for the debugging process that assigns label for each Value.
     pub fn new_lab<T: IntoValue>(data: T, label: &str) -> Self {
         Self {
             data: data.into_value(),
@@ -132,9 +161,9 @@ impl Value {
         }
     }
 
-    // calling compute gradient on a output value will comput the gradient value
-    // w.r.t each one of its operands and store those gradients in the corresponding operands objects.
-    // Here chain rule of derivative is used: dy/dz = (dy/dx)(dx/dz)
+    /// calling compute gradient on a output value will comput the gradient value
+    /// w.r.t each one of its operands and store those gradients in the corresponding operands objects.
+    /// Here chain rule of derivative is used: dy/dz = (dy/dx)(dx/dz)
     /// updated the gradient values inplace.
     fn comput_gradient(&mut self) {
         /*
@@ -289,9 +318,10 @@ impl MVal {
         self.collect_operands_inner(&mut visited)
     }
 
-    // collect all the node references in the breadth first search(BFS) manner.
+    /// collect all the Values that a calling Values depending on
+    /// in the breadth first search(BFS) manner.
     /*
-      We have to use the topological order here. otherwise if the same node is
+      We have to use the topological order here. otherwise if the same Value is
       re-used two times in two different places, then all its nested operands(children) will be
       called twice. To avoide this issue we use topological order and check weather each node is
       visited before exploring all its children.
@@ -312,13 +342,14 @@ impl MVal {
         all_nodes
     }
 
-    /// set the gradient value of all its children to 0.
+    /// set the gradient value of all its
+    /// children(all Values those which a calling Value is depending on) to 0.
     pub fn zero_grad(&self) {
         let mut visited = HashSet::new();
         self.zero_grad_inner(&mut visited);
     }
 
-    // set all the gradient values to zero
+    /// set all the gradient values to zero
     pub fn zero_grad_inner(&self, visited: &mut HashSet<MVal>) {
         // if not already visited, then collect all of its children.
         let mut val = self.0.borrow_mut();
@@ -332,7 +363,7 @@ impl MVal {
     }
 }
 
-// Implement Hash based on the address of the Rc
+/// Implement Hash based on the address of the Rc
 impl Hash for MVal {
     fn hash<H: Hasher>(&self, state: &mut H) {
         let ptr = Rc::as_ptr(&self.0) as *const (); // Get raw pointer address
@@ -340,7 +371,7 @@ impl Hash for MVal {
     }
 }
 
-// Implement Eq and PartialEq based on the address of the Rc
+/// Implement Eq and PartialEq based on the address of the Rc
 impl PartialEq for MVal {
     fn eq(&self, other: &Self) -> bool {
         Rc::as_ptr(&self.0) == Rc::as_ptr(&other.0)
