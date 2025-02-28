@@ -134,6 +134,7 @@ impl Value {
 
     // calling compute gradient on a output value will comput the gradient value
     // w.r.t each one of its operands and store those gradients in the corresponding operands objects.
+    // Here chain rule of derivative is used: dy/dz = (dy/dx)(dx/dz)
     /// updated the gradient values inplace.
     fn comput_gradient(&mut self) {
         /*
@@ -151,6 +152,7 @@ impl Value {
                         mutable reference of same variable two times
                     */
                     if let Ok(mut rhs) = out.operands[1].0.try_borrow_mut() {
+                        // if y = x + z, then dy/dx = 1 and dy/dz = 1
                         lhs.grad += out.grad * 1.0;
                         rhs.grad += out.grad * 1.0;
                     } else {
@@ -160,7 +162,7 @@ impl Value {
 
                             if y = x + x = 2x then dy/dx = 2;
                         */
-                        lhs.grad += 2.0;
+                        lhs.grad += out.grad * 2.0;
                     }
                 }
             }
@@ -169,6 +171,7 @@ impl Value {
                     let mut lhs = out.operands[0].0.borrow_mut();
                     // handle: let c = a.clone() - a;
                     if let Ok(mut rhs) = out.operands[1].0.try_borrow_mut() {
+                        // if y = x - z, then dy/dx = 1 and dy/dz = -1
                         lhs.grad += out.grad * 1.0;
                         rhs.grad += out.grad * -1.0;
                     }
@@ -309,6 +312,7 @@ impl MVal {
         all_nodes
     }
 
+    /// set the gradient value of all its children to 0.
     pub fn zero_grad(&self) {
         let mut visited = HashSet::new();
         self.zero_grad_inner(&mut visited);

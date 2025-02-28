@@ -6,13 +6,15 @@ use rand::{
 };
 use std::f64::consts::PI;
 
-pub fn make_moons(n_samples: usize, noise: f64) -> (Array2<f64>, Vec<u8>) {
+/// returns `([[x1,y1], [x2,y2], [x3,y3],...], [1, -1, 1,...])`
+/// 1 means (x,y) belongs to upper halft moon else lower half moon
+pub fn make_moons(n_samples: usize, noise: f64) -> (Array2<f64>, Vec<f64>) {
     let mut rng = rand::thread_rng();
     let uniform = Uniform::new(0.0, PI);
 
     // Generate points for the first moon
     let mut data = Vec::with_capacity(n_samples);
-    let mut labels = Vec::with_capacity(n_samples);
+    let mut labels: Vec<f64> = Vec::with_capacity(n_samples);
 
     for i in 0..n_samples {
         let angle = uniform.sample(&mut rng);
@@ -25,23 +27,24 @@ pub fn make_moons(n_samples: usize, noise: f64) -> (Array2<f64>, Vec<u8>) {
         // first half circle point
         if i < n_samples / 2 {
             data.push([x, y]);
-            labels.push(0);
+            labels.push(1.0);
         } else {
             // Shift and mirror for the second moon(half cirle points)
             data.push([x + 1.0, -y + 0.5]);
-            labels.push(1);
+            labels.push(-1.0);
         }
     }
 
     (
-        Array2::from_shape_vec((n_samples, 2), data.concat()).unwrap(),
+        Array2::from_shape_vec((n_samples, 2), data.concat())
+            .expect("error constructing array from vector"),
         labels,
     )
 }
 
 pub fn _scatter_plot(
     data: &Array2<f64>,
-    category: &Vec<u8>,
+    category: &Vec<f64>,
     title: &str,
     file_path: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -83,8 +86,10 @@ pub fn _scatter_plot(
             (x, y),
             5,
             ShapeStyle {
-                color: if cat == 0 {
+                color: if cat < -0.9 {
                     BLUE.to_rgba()
+                } else if cat > 0.9 {
+                    GREEN.to_rgba()
                 } else {
                     RED.to_rgba()
                 },

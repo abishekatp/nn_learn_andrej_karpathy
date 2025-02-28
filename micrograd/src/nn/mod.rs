@@ -109,7 +109,7 @@ pub struct MLP {
 
 impl MLP {
     /// new MLP with Tanh activation.
-    /// neuron_inp - number of inputs for each neuron.
+    /// neuron_inp - number of inputs for each neuron in the current layer.
     /// layer_outs - number of outputs(or neurons) in each layer.
     pub fn new(neuron_inp: usize, layer_outs: Vec<usize>) -> Self {
         let mut lays = vec![];
