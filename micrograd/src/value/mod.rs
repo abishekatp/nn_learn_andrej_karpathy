@@ -326,6 +326,7 @@ impl MVal {
       called twice. To avoide this issue we use topological order and check weather each node is
       visited before exploring all its children.
     */
+    // todo: here I could generate some unique id field for each MVal and use it keep track of visisted set.
     pub fn collect_operands_inner(&self, visited: &mut HashSet<MVal>) -> Vec<MVal> {
         let mut all_nodes = vec![];
 
