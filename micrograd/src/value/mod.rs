@@ -21,37 +21,40 @@ What is Value object:
   Value is a fundamental unit of the neural network. All the logic is build
 on top of this Value Object. It will have the following properties.
     - The ultimate purpose of a Value is storing some floating point number in the
-      `data` field and computing it gradient value w.r.t to some arbitrary Value that
-      is depending on it.
+      `data` field and computing it gradient value w.r.t to some arbitrary output Value that
+      being computed using the Value.
 
     - Each operation(like addition, multiplication, division of two Value objects) that is
-      implemented on the Value will have its own corresponding gradient implementation.
+      implemented on the Value will have its own corresponding gradient implementation. This
+      gradient implementation will compute the gradient of the Value object that is being
+      used with the particular operation(e.g addition, multiplication, etc) to compute some
+      output Value.
 
-    - So the `grad` field of the curent Value object will store the gradient value w.r.t
-      the final output Value object that is depending on the current Value object.
+    - The gradient will tell you, how the small change in the `data` field of the Value
+      w.r.t a particular operation will affect the output Value's `data` field.
+      But remember that the `grad` field stores the global gradient of the Value.
 
-    - The global gradient of a Value will be equal to
-      gradient w.r.t its output Value(`data`) and its `data` multiplied by
-      the gradient of the output Value. This is based on the chain rule of derivation.
+    - The global gradient of the Value will be equal to the
+      gradinet of the current Value multiplied by the gradient of the output Value.
+      This multiplication will continue until we reach the final output Value. Sicne
+      the output Value of the current operation might be used in another computation
+      together with some other operation. This is based on the chain rule of derivation.
 
-    - The local gradient will tell you, how the small change in the `data` field of a Value
-      w.r.t a particular operation will affect its direct dependent Value's `data` field.
-      But remember that the `grad` field stores the global gradient of a Value.
-
-    - The global gradient will tell us how small change to the `data` field of a Value
-      will affect some arbitrary final output Value's `data` field that is depending on the current Value.
+    - The global gradient will tell us how small change to the `data` field of the current Value
+      will affect the final output Value's `data` field. The final output will be depending on
+      the current Value either directly or indirectly.
 
 Use case:
     - We can construct a complex expression using multiple such Values and it's implemented operations,
       then we can copute the global gradient of each of these Values using the back propogation.
 
     - The Value is wrapped with Rc and RefCell to be able clone and reuse the same
-      Value as dependency of multiple arbitrary Values. The `grad` will store the
-      sum of all these gradient values w.r.t eahc one of its dependencies.
+      Value in a computation of different output Values. The `grad` field will store the
+      sum of the gradient values computed for each instance of the usage of the Value.
 
-    - Suppose we have the Value A, B, C and D. C = A + B and D = A * C. then the gradient
-      of A will be sum of gradient w.r.t D and C. This is because A will affect the final
-      output in two ways. The first way is through the addition with B and the second way
+    - Suppose we have the Value A, B, C and E. C = A + B, D = A * C and E = C + D. then the gradient
+      of A will be sum of gradient w.r.t C and D. This is because A will affect the final
+      output Value E in two ways. The first way is through the addition with B and the second way
       is through the multiplication with C.
 
 

@@ -20,18 +20,22 @@ What is Neuron?
     - Each Neuron will store list of weights that are of type Value(or equivalently MVal) and
       one bias Value.
 
-    - the lenght of a input instance should be equal to the length of the list of weights of a Neuron.
+    - The lenght of a input array(or list) should be equal to the length of the
+      list of weights of a Neuron.
 
     - A Neuron will adjust each of its weights to port itself to compute the expected output.
-      Weights of Neuron are adjusted based on the `grad` property of each weight of the Neuron.
+      Each weight of a Neuron are adjusted based on the corresponding `grad` property of each weight of the Neuron.
 
-    - The `grad` property of each of its weights will tell us how a small change to its weight has
+    - The `grad` property of each of its weights will tell us how a small change to that weight has
       affected its output for the last passed input. Based on this we can adjust its weight
       such that it minimises the difference between computed output and actual expected output.
 
     - By default each neuron will use the Tanh activation. which means the sum of multiplication
       of input values and their corresponding weights will be passed to the tanh function before
-      returning the final output.
+      returning the final output. But Neuron can also use ReLU or Linear activation function.
+      The activation function is used to introduce non-linearity in the model. Otherwise
+      the model might become just a linear regression model. Which is just a linear equation
+      of the form y = mx + b.
 
 What is Layer?
     - the Layer is a list of Neurons. Usually we will pass the same input to each Neuron of
@@ -48,7 +52,7 @@ What is MLP?
       The i'th layer will depend on outputs of the (i-1)'th layer.
 
     - If i'th layer has 10 Neurons, then it will have 10 outputs. Then each Neuron in the (i+1)'th
-      layer will have 10 inputs and 10 corresponding weights.
+      layer will have 10 inputs and 10 corresponding weights and one bias Value.
 
 How to Use it?
     - First define a MLP with number of input for each neuron in the first layer and
