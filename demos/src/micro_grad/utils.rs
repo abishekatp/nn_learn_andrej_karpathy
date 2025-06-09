@@ -42,7 +42,7 @@ pub fn make_moons(n_samples: usize, noise: f64) -> (Array2<f64>, Vec<f64>) {
     )
 }
 
-pub fn _scatter_plot(
+pub fn scatter_plot(
     data: &Array2<f64>,
     category: &Vec<f64>,
     title: &str,

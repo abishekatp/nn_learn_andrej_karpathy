@@ -1,12 +1,12 @@
-use crate::micro_grad::utils::{_scatter_plot, make_moons};
+use crate::micro_grad::utils::{make_moons, scatter_plot};
 use micrograd::{MVal, MLP};
 use ndarray::Array2;
 use plotters::prelude::LogScalable;
 
-pub fn _binary_classifier() {
+pub fn binary_classifier() {
     let (inps, outs) = make_moons(200, 0.1);
     // println!("Data: {:?}\n Labels: {:?}", data,labels);
-    if let Err(err) = _scatter_plot(
+    if let Err(err) = scatter_plot(
         &inps,
         &outs,
         "Training Sample",
@@ -70,11 +70,11 @@ pub fn _binary_classifier() {
         }
     }
 
-    _test_for_all_points(&model);
-    _test_for_generated(&model);
+    test_for_all_points(&model);
+    test_for_generated(&model);
 }
 
-fn _test_for_generated(model: &MLP) {
+fn test_for_generated(model: &MLP) {
     // make prediction for newly generated data
     let (inps, outs) = make_moons(150, 0.5);
     println!("\nmaking the predictions:");
@@ -99,7 +99,7 @@ fn _test_for_generated(model: &MLP) {
         index += 1;
     }
 
-    if let Err(err) = _scatter_plot(
+    if let Err(err) = scatter_plot(
         &inps,
         &preds,
         "Prediction Sample",
@@ -110,7 +110,7 @@ fn _test_for_generated(model: &MLP) {
     }
 }
 
-fn _test_for_all_points(model: &MLP) {
+fn test_for_all_points(model: &MLP) {
     // make prediction for newly generated data
     let inps = get_all_test_points();
     println!("\nmaking the predictions:");
@@ -130,7 +130,7 @@ fn _test_for_all_points(model: &MLP) {
         println!("pred:{pre}");
     }
 
-    if let Err(err) = _scatter_plot(
+    if let Err(err) = scatter_plot(
         &inps,
         &preds,
         "Prediction Sample",

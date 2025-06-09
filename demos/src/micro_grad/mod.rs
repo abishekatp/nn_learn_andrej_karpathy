@@ -1,19 +1,19 @@
 mod binary_class;
 mod utils;
-pub use binary_class::_binary_classifier;
+pub use binary_class::binary_classifier;
 
 use micrograd::{MVal, MLP};
 
-pub fn _run_all_examples() {
-    // _micrograd_simple1();
-    _micrograd_simple2();
-    // _micrograd_clone1();
-    // _micrograd_clone2();
+pub fn run_all_examples() {
+    // micrograd_simple1();
+    micrograd_simple2();
+    // micrograd_clone1();
+    // micrograd_clone2();
 
-    _mlp_example();
+    mlp_example();
 }
 
-pub fn _micrograd_simple1() {
+pub fn micrograd_simple1() {
     // inputs
     let x1 = MVal::new_lab(2, "x1");
     let x2 = MVal::new_lab(0, "x2");
@@ -34,7 +34,7 @@ pub fn _micrograd_simple1() {
     o.backward();
 }
 
-pub fn _micrograd_simple2() {
+pub fn micrograd_simple2() {
     // inputs
     let x1 = MVal::new_lab(2, "x1");
     let x2 = MVal::new_lab(0, "x2");
@@ -60,7 +60,7 @@ pub fn _micrograd_simple2() {
     o.backward();
 }
 
-pub fn _micrograd_clone1() {
+pub fn micrograd_clone1() {
     // inputs
     let a = MVal::new_lab(2, "a");
     let mut b = a.clone() + a;
@@ -68,7 +68,7 @@ pub fn _micrograd_clone1() {
     b.backward();
 }
 
-pub fn _micrograd_clone2() {
+pub fn micrograd_clone2() {
     // inputs
     let a = MVal::new_lab(-2, "a");
     let b = MVal::new_lab(3, "b");
@@ -80,7 +80,7 @@ pub fn _micrograd_clone2() {
     f.backward();
 }
 
-pub fn _mlp_example() {
+pub fn mlp_example() {
     let training_iteration = 2000;
     let mut mlp = MLP::new(3, vec![4, 4, 1]);
     let xs = vec![
