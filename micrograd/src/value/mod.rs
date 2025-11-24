@@ -223,7 +223,7 @@ impl Value {
                 if out.operands.len() == 2 {
                     let mut numerator = out.operands[0].0.borrow_mut();
 
-                    // y=x/z then dy/dx = 1/z and dy/dz = -x/y^2.
+                    // y=x/z then dy/dx = 1/z and dy/dz = -x/z^2.
                     if let Ok(mut denominator) = out.operands[1].0.try_borrow_mut() {
                         numerator.grad += out.grad * 1.0 / denominator.data;
                         denominator.grad += (out.grad * -1.0 * numerator.data)
