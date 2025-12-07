@@ -1,11 +1,10 @@
 [package]
-name = "demos"
+name = "micrograd_demos"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 micrograd = { path = "../micrograd" }
-make_more = { path = "../make_more" }
 ndarray = "0.16.1"
 plotters = "0.3.7"
 rand = "0.8.5"
