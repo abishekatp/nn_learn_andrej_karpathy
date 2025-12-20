@@ -1,4 +1,4 @@
-use crate::micro_grad::utils::{make_moons, scatter_plot};
+use crate::binary_classifier::utils::{make_moons, scatter_plot};
 use micrograd::{MVal, MLP};
 use ndarray::Array2;
 use plotters::prelude::LogScalable;

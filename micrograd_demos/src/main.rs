@@ -2,7 +2,7 @@
 #![allow(unused_imports)]
 
 mod bigram;
-mod micro_grad;
+mod binary_classifier;
 
 fn main() {
     // micro_grad::run_all_examples();
