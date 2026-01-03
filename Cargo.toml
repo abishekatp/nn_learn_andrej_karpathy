@@ -1,3 +1,3 @@
 [workspace]
-members = ["micrograd", "micrograd_demos", "burn_examples"]
+members = ["micrograd", "micrograd_demos", "burn_examples", "charts"]
 resolver = "1"

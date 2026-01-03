@@ -631,6 +631,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "613afe47fcd5fac7ccf1db93babcb082c5994d996f20b8b159f2ad1658eb5724"
 
 [[package]]
+name = "charts"
+version = "0.1.0"
+dependencies = [
+ "ndarray 0.16.1",
+ "plotters",
+]
+
+[[package]]
 name = "chrono"
 version = "0.4.39"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2366,9 +2374,9 @@ dependencies = [
 name = "micrograd_demos"
 version = "0.1.0"
 dependencies = [
+ "charts",
  "micrograd",
  "ndarray 0.16.1",
- "plotters",
  "rand 0.8.5",
 ]
 

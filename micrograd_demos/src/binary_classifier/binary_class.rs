@@ -1,7 +1,7 @@
-use crate::binary_classifier::utils::{make_moons, scatter_plot};
+use crate::binary_classifier::utils::make_moons;
+use charts::scatter_plot::scatter_plot;
 use micrograd::{MVal, MLP};
 use ndarray::Array2;
-use plotters::prelude::LogScalable;
 
 pub fn binary_classifier() {
     let (inps, outs) = make_moons(200, 0.1);
@@ -42,19 +42,14 @@ pub fn binary_classifier() {
                 .get(index)
                 .expect("expecting the output label for each input");
             // svm "max-margin" loss. loss will increase when ouput and prediction is not matching
-            loss = loss + (1.0 - pre.clone() * out.as_f64());
+            loss = loss + (1.0 - pre.clone() * *out);
 
             // accuracy will be high when both output and prediction has the same sign.
-            accuracy = accuracy
-                + (if pre.get() * (*out).as_f64() > 0.0 {
-                    1.0
-                } else {
-                    0.0
-                });
+            accuracy = accuracy + (if pre.get() * (*out) > 0.0 { 1.0 } else { 0.0 });
             index += 1;
         }
-        let mut avg_loss = loss.clone() / index.as_f64();
-        let avg_accr = accuracy * 100.0 / index.as_f64();
+        let mut avg_loss = loss.clone() / (index as f64);
+        let avg_accr = accuracy * 100.0 / (index as f64);
         println!("step:{k}, loss:{avg_loss}, accuracy:{avg_accr}%");
 
         // todo: implement the L2 normalisation
@@ -64,7 +59,7 @@ pub fn binary_classifier() {
         avg_loss.zero_grad();
         avg_loss.backward();
 
-        let learning_rate = 1.0 - (0.9 * k.as_f64() / 100.0);
+        let learning_rate = 1.0 - (0.9 * (k as f64) / 100.0);
         for p in model.parameters() {
             p.set(p.get() - MVal::new(learning_rate * p.grad()));
         }

@@ -5,6 +5,6 @@ edition = "2021"
 
 [dependencies]
 micrograd = { path = "../micrograd" }
-ndarray = "0.16.1"
-plotters = "0.3.7"
-rand = "0.8.5"
+charts = { path = "../charts" }
+ndarray = { version = "0.16" }
+rand = { version = "0.8" }

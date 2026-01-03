@@ -1,6 +1,5 @@
 use plotters::prelude::*;
 use plotters::style::colors::colormaps::ViridisRGB;
-use plotters::style::FontStyle;
 pub fn plot_2d_heatmap(
     data: &Vec<Vec<f64>>,  // Your 2D array (rows × cols)
     filename: &str,        // Output SVG file, e.g., "heatmap.svg"
@@ -69,7 +68,7 @@ pub fn plot_2d_heatmap(
             let styled_text = text_style.clone().color(&text_color);
 
             // Center of the cell
-            let center_x = (x0 + x1) / 2;
+            let center_x = x0 + 2;
             let center_y = (y0 + y1) / 2;
 
             root.draw_text(&text, &styled_text, (center_x, center_y))?;
@@ -77,21 +76,5 @@ pub fn plot_2d_heatmap(
     }
 
     root.present()?;
-    Ok(())
-}
-
-// Example usage
-pub fn _example() -> Result<(), Box<dyn std::error::Error>> {
-    // Sample 10x15 2D data
-    let data: Vec<Vec<f64>> = (0..10)
-        .map(|i| {
-            (0..15)
-                .map(|j| (i as f64 * j as f64).sin() * 10.0 + 20.0) // Arbitrary values
-                .collect()
-        })
-        .collect();
-
-    plot_2d_heatmap(&data, "heatmap.svg", 800, 600, 0)?;
-    println!("SVG saved as heatmap.svg");
     Ok(())
 }
