@@ -634,7 +634,6 @@ checksum = "613afe47fcd5fac7ccf1db93babcb082c5994d996f20b8b159f2ad1658eb5724"
 name = "charts"
 version = "0.1.0"
 dependencies = [
- "ndarray 0.16.1",
  "plotters",
 ]
 
@@ -2378,6 +2377,7 @@ dependencies = [
  "micrograd",
  "ndarray 0.16.1",
  "rand 0.8.5",
+ "rand_chacha 0.3.1",
 ]
 
 [[package]]

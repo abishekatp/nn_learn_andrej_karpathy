@@ -1,11 +1,12 @@
 use plotters::prelude::*;
 use plotters::style::colors::colormaps::ViridisRGB;
 pub fn plot_2d_heatmap(
-    data: &Vec<Vec<f64>>,  // Your 2D array (rows × cols)
-    filename: &str,        // Output SVG file, e.g., "heatmap.svg"
-    width: u32,            // Image width in pixels
-    height: u32,           // Image height in pixels
-    decimal_places: usize, // Number of decimal places for text
+    data: &Vec<Vec<f64>>,      // Your 2D array (rows × cols)
+    labels: &Vec<Vec<String>>, // Your 2D array (rows × cols)
+    filename: &str,            // Output SVG file, e.g., "heatmap.svg"
+    width: u32,                // Image width in pixels
+    height: u32,               // Image height in pixels
+    decimal_places: usize,     // Number of decimal places for text
 ) -> Result<(), Box<dyn std::error::Error>> {
     let rows = data.len();
     if rows == 0 {
@@ -60,17 +61,23 @@ pub fn plot_2d_heatmap(
             // Draw filled rectangle
             root.draw(&Rectangle::new([(x0, y0), (x1, y1)], color.filled()))?;
 
-            let text = format!("{:.1$}", val, decimal_places);
-
             // Choose text color: black for light backgrounds, white for dark
             let text_color = if normalized < 0.5 { WHITE } else { BLACK };
-
             let styled_text = text_style.clone().color(&text_color);
 
-            // Center of the cell
-            let center_x = x0 + 2;
-            let center_y = (y0 + y1) / 2;
+            if let Some(t_vec) = labels.get(i) {
+                if let Some(t) = t_vec.get(j) {
+                    // Center of the cell
+                    let center_x = ((x0 + x1) / 2) - 8;
+                    let center_y = y0 + 5;
+                    root.draw_text(&t, &styled_text, (center_x, center_y))?;
+                }
+            }
 
+            let text = format!("{:.1$}", val, decimal_places);
+            // Center of the cell
+            let center_x = x0 + 5;
+            let center_y = y0 + 8 + (font_size as i32);
             root.draw_text(&text, &styled_text, (center_x, center_y))?;
         }
     }

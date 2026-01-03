@@ -8,3 +8,4 @@ micrograd = { path = "../micrograd" }
 charts = { path = "../charts" }
 ndarray = { version = "0.16" }
 rand = { version = "0.8" }
+rand_chacha = { version = "0.3" }

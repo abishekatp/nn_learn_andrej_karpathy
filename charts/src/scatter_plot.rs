@@ -1,14 +1,13 @@
-use ndarray::Array2;
 use plotters::prelude::*;
 
+// data - Vec<(x:f64, y:f64)>
 pub fn scatter_plot(
-    data: &Array2<f64>,
+    data: &Vec<(f64, f64)>,
     category: &Vec<f64>,
     title: &str,
     file_path: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    // "./scatter_plot.png"
-    let root_area = BitMapBackend::new(file_path, (1024, 768)).into_drawing_area();
+    let root_area = SVGBackend::new(file_path, (1024, 768)).into_drawing_area();
     root_area.fill(&WHITE)?;
 
     let root_area = root_area.titled(title, ("sans-serif", 60))?;
@@ -27,15 +26,9 @@ pub fn scatter_plot(
 
     // Draw the scatter points
     let mut i = 0;
-    cc.draw_series(data.rows().into_iter().map(|row| {
-        let x = row
-            .get(0)
-            .expect("expecting the x axis value in the array 2nd dimention")
-            .clone() as f32;
-        let y = row
-            .get(1)
-            .expect("expecting the x axis value in the array 2nd dimention")
-            .clone() as f32;
+    cc.draw_series(data.iter().map(|row| {
+        let x = row.0 as f32;
+        let y = row.1 as f32;
         let cat = category
             .get(i)
             .expect("expectinve category number each data point")

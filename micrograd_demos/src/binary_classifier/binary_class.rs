@@ -4,13 +4,24 @@ use micrograd::{MVal, MLP};
 use ndarray::Array2;
 
 pub fn binary_classifier() {
-    let (inps, outs) = make_moons(200, 0.1);
+    let seed = 42;
+    let (inps, outs) = make_moons(200, 0.1, seed);
     // println!("Data: {:?}\n Labels: {:?}", data,labels);
+    let draw_inp = inps
+        .rows()
+        .into_iter()
+        .map(|row| {
+            (
+                row.get(0).unwrap_or(&0.0).clone(),
+                row.get(1).unwrap_or(&0.0).clone(),
+            )
+        })
+        .collect::<Vec<(f64, f64)>>();
     if let Err(err) = scatter_plot(
-        &inps,
+        &draw_inp,
         &outs,
         "Training Sample",
-        "./images/training_sample.png",
+        "./images/training_sample.svg",
     ) {
         dbg!(err);
         return;
@@ -71,7 +82,8 @@ pub fn binary_classifier() {
 
 fn test_for_generated(model: &MLP) {
     // make prediction for newly generated data
-    let (inps, outs) = make_moons(150, 0.5);
+    let seed = 142;
+    let (inps, outs) = make_moons(150, 0.5, seed);
     println!("\nmaking the predictions:");
     let mut index = 0;
     let mut preds = vec![];
@@ -94,11 +106,22 @@ fn test_for_generated(model: &MLP) {
         index += 1;
     }
 
+    let draw_inp = inps
+        .rows()
+        .into_iter()
+        .map(|row| {
+            (
+                row.get(0).unwrap_or(&0.0).clone(),
+                row.get(1).unwrap_or(&0.0).clone(),
+            )
+        })
+        .collect::<Vec<(f64, f64)>>();
+
     if let Err(err) = scatter_plot(
-        &inps,
+        &draw_inp,
         &preds,
         "Prediction Sample",
-        "./images/prediction1.png",
+        "./images/prediction1.svg",
     ) {
         dbg!(err);
         return;
@@ -111,8 +134,7 @@ fn test_for_all_points(model: &MLP) {
     println!("\nmaking the predictions:");
 
     let mut preds = vec![];
-    for row in inps.rows() {
-        let v = row.to_vec();
+    for v in inps.clone() {
         // forward the model to get the prediction
         // ypre is expected to be approximately equal to -1 or 1. This is what we are training the model for.
         let pre = model
@@ -125,18 +147,19 @@ fn test_for_all_points(model: &MLP) {
         println!("pred:{pre}");
     }
 
+    let draw_inp = inps.iter().map(|v| (v[0], v[1])).collect();
     if let Err(err) = scatter_plot(
-        &inps,
+        &draw_inp,
         &preds,
         "Prediction Sample",
-        "./images/prediction2.png",
+        "./images/prediction2.svg",
     ) {
         dbg!(err);
         return;
     }
 }
 
-fn get_all_test_points() -> Array2<f64> {
+fn get_all_test_points() -> Vec<Vec<f64>> {
     let mut i = -2.5;
     let mut inps = vec![];
     while i < 3.0 {
@@ -147,7 +170,5 @@ fn get_all_test_points() -> Array2<f64> {
         }
         i += 0.1;
     }
-
-    Array2::from_shape_vec((inps.len(), 2), inps.concat())
-        .expect("error constructing array from vector")
+    inps
 }

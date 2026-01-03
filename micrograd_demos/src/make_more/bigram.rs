@@ -1,6 +1,6 @@
 use charts::heatmap::plot_2d_heatmap;
 
-use crate::make_more::utils::char_to_index;
+use crate::make_more::utils::{char_to_index, index_to_char};
 use std::fs;
 
 pub fn bigram_example(file_path: String) {
@@ -29,6 +29,23 @@ pub fn bigram_example(file_path: String) {
 
     // draw the lookup table as heatmap
     let draw_lookup: Vec<Vec<f64>> = ch_lookup.map(|row| row.map(|v| v as f64).to_vec()).to_vec();
-    plot_2d_heatmap(&draw_lookup, "./images/heatmap.svg", 1500, 1500, 0)
-        .expect("error plotting the image");
+    let draw_labels: Vec<Vec<String>> = ch_lookup
+        .iter()
+        .enumerate()
+        .map(|(i, row)| {
+            row.iter()
+                .enumerate()
+                .map(|(j, _)| format!("{}{}", index_to_char(i), index_to_char(j)))
+                .collect()
+        })
+        .collect();
+    plot_2d_heatmap(
+        &draw_lookup,
+        &draw_labels,
+        "./images/heatmap.svg",
+        1500,
+        1500,
+        0,
+    )
+    .expect("error plotting the image");
 }
